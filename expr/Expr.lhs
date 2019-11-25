@@ -28,6 +28,7 @@ Val definition
 >    a + b = VInt (toInteger a + toInteger b)
 >    a * b = VInt (toInteger a * toInteger b)
 >    a - b = VInt (toInteger a - toInteger b)
+>    negate a = VInt (negate (toInteger a))
 >    fromInteger i = VInt i
 > instance Integral Val where
 >    a `div` b = VInt (toInteger a `div` toInteger b)
@@ -58,6 +59,8 @@ Val definition
 > VBool _ `and` a = error (show(a) ++ " is not type VBool")
 > a `and` _ = error (show(a) ++ " is not type VBool")
 
+> no (VBool b) = VBool (not b)
+
 > isVBool (VBool _) = True
 > isVBool _         = False
 > isVInt  (VInt  _) = True
@@ -82,6 +85,9 @@ Expr definition
 
 > data Uop = Not | Neg
 >   deriving (Eq, Read, Show)
+> $(addProd "Uop" ''Nt_Expr
+>   [  ("uop"     ,  Ter ''Uop),
+>      ("expr",  NonTer ''Nt_Expr)])
 
 > $(closeNTs [''Nt_Expr])
 
@@ -109,11 +115,17 @@ Expr definition
 >                                                  Div -> (l `div` r)
 >                                                  Mod -> (l `mod` r)))
 
-> asp_eval = eval_Bop .+: eval_val .+: eval_var .+: emptyAspect
+> eval_Uop = syn eval p_Uop (do e  <- at ch_expr eval
+>                               op <- ter ch_uop
+>                               return (case op of Not -> no e
+>                                                  Neg -> negate e))
+
+> asp_eval = eval_Uop .+: eval_Bop .+: eval_val .+: eval_var .+: emptyAspect
 
 > env_bop_l = inh env p_Bop ch_leftBop (at lhs env)
 > env_bop_r = inh env p_Bop ch_rightBop (at lhs env)
+> env_uop = inh env p_Uop ch_expr (at lhs env)
 
-> asp_expr = env_bop_l .+: env_bop_r .+: asp_eval
+> asp_expr =   env_uop .+: env_bop_l .+: env_bop_r .+: asp_eval
 
 > evalExpr exp envi = sem_Expr asp_expr exp  (env =. envi *. emptyAtt) #. eval
