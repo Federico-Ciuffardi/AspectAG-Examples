@@ -11,19 +11,15 @@
 > {-# LANGUAGE MultiParamTypeClasses #-}
 > {-# LANGUAGE TypeApplications #-}
 
+> module ExprEval where
 
-> module Expr where
-
+> import ExprSyntax
 > import qualified Prelude
 > import Prelude hiding (or,and)
+> import Data.Maybe
 > import Language.Grammars.AspectAG
 > import Language.Grammars.AspectAG.TH
-> import Data.Maybe
 
-Val definition
-
-> data Val = VBool Bool  | VInt Integer
->   deriving (Read, Show)
 > instance Num Val where
 >    a + b = VInt (toInteger a + toInteger b)
 >    a * b = VInt (toInteger a * toInteger b)
@@ -42,11 +38,6 @@ Val definition
 >    VInt  i <= a        = error (show(a) ++ " is not of type VInt")
 >    VBool b <= VBool b' = b <= b'
 >    VBool b <= a        = error (show(a) ++ " is not of type VBool")
-> instance Eq Val where
->    VInt  i == VInt j   = i == j
->    VInt  i == a        = error (show(a) ++ " is not of type VInt")
->    VBool b == VBool b' = b == b'
->    VBool b == a        = error (show(a) ++ " is not of type VBool")
 > instance Enum Val where
 
 > VBool False `or` VBool False = VBool False
@@ -66,32 +57,6 @@ Val definition
 > isVInt  (VInt  _) = True
 > isVInt  _         = False
 
-Expr definition
-
-> $(addNont "Expr")
-
-> $(addProd "Val" ''Nt_Expr
->   [  ("val", Ter ''Val)])
-
-> $(addProd "Var" ''Nt_Expr
->   [  ("var", Ter ''String)])
-
-> data Bop = Or | And | Equ | Lt | Add | Sub | Mul | Div | Mod
->   deriving (Eq, Read, Show)
-> $(addProd "Bop" ''Nt_Expr
->   [  ("leftBop" ,  NonTer ''Nt_Expr),
->      ("bop"     ,  Ter ''Bop),
->      ("rightBop",  NonTer ''Nt_Expr)])
-
-> data Uop = Not | Neg
->   deriving (Eq, Read, Show)
-> $(addProd "Uop" ''Nt_Expr
->   [  ("uop"     ,  Ter ''Uop),
->      ("expr",  NonTer ''Nt_Expr)])
-
-> $(closeNTs [''Nt_Expr])
-
-> $(mkSemFunc ''Nt_Expr)
 
 > type VarVals = [(String, Val)]
 

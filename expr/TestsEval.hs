@@ -2,7 +2,8 @@ import Test.Tasty
 import Test.Tasty.QuickCheck
 import qualified Prelude
 import Prelude hiding (or,and)
-import Expr
+import ExprSyntax
+import ExprEval
 
 instance Arbitrary Val where
   arbitrary = oneof  [do b <- choose (False, True)
