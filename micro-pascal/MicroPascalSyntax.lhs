@@ -24,8 +24,9 @@
 > type Ident = String
 
 > $(addNont "Program")
-> $(addNont "Defs"); $(addNont "DefList")
-> $(addNont "Body"); $(addNont "StmtList")
+> $(addNont "Defs")
+> $(addNont "Body")
+> $(addNont "Stmts")
 > $(addNont "Stmt")
 
 
@@ -33,19 +34,17 @@
 >                                   ("programDefs", NonTer ''Nt_Defs),
 >                                   ("programBody", NonTer ''Nt_Body)])
 
-> $(addProd "Defs" ''Nt_Defs [("defList", NonTer ''Nt_DefList)])
-> $(addProd "EmptyDef" ''Nt_DefList [])
-> $(addProd "ConsDef" ''Nt_DefList  [("varName", Ter ''Ident),
->                                    ("varType", Ter ''Type),
->                                    ("tailDefList", NonTer ''Nt_Defs)])
+> $(addProd "EmptyDef" ''Nt_Defs [])
+> $(addProd "ConsDef" ''Nt_Defs  [("varName", Ter ''Ident),
+>                                 ("varType", Ter ''Type),
+>                                 ("tailDefList", NonTer ''Nt_Defs)])
 
 
+> $(addProd "Body" ''Nt_Body [("bodyStmts", NonTer ''Nt_Stmts)])
 
-> $(addProd "ConsStmt"    ''Nt_StmtList [("headStmt", NonTer ''Nt_Stmt),
->                                        ("tailStmtList", NonTer ''Nt_StmtList)])
-> $(addProd "SingleStmt"  ''Nt_StmtList [("stmtLast", NonTer ''Nt_Stmt)] )
-> $(addProd "Body" ''Nt_Body [("bodyStmts", NonTer ''Nt_StmtList)])
-
+> $(addProd "EmptyStmt" ''Nt_Stmts [] )
+> $(addProd "ConsStmt"  ''Nt_Stmts [("headStmt", NonTer ''Nt_Stmt),
+>                                   ("tailStmtList", NonTer ''Nt_Stmts)])
 
 > $(addProd "Assign" ''Nt_Stmt [("assignName", Ter ''Ident),
 >                               ("assignExpr", NonTer ''Nt_Expr)])
@@ -57,8 +56,8 @@
 > $(addProd "WriteLn" ''Nt_Stmt [("writeLnExpr", NonTer ''Nt_Expr)])
 > $(addProd "ReadLn" ''Nt_Stmt [("readLnName", Ter ''Ident)])
 
-> $(closeNTs [''Nt_Program, ''Nt_Body, ''Nt_StmtList,
->             ''Nt_DefList, ''Nt_Defs, ''Nt_Stmt])
+> $(closeNTs [''Nt_Program, ''Nt_Body, ''Nt_Stmts,
+>             ''Nt_Defs, ''Nt_Stmt])
 
-> $(mkSemFuncs [''Nt_Program, ''Nt_Body, ''Nt_StmtList,
->             ''Nt_DefList, ''Nt_Defs, ''Nt_Stmt])
+> $(mkSemFuncs [''Nt_Program, ''Nt_Body, ''Nt_Stmts,
+>               ''Nt_Defs, ''Nt_Stmt])
