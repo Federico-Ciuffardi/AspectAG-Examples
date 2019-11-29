@@ -23,12 +23,7 @@ Example: pretty printing expressions
 
 > type DeclaredVars = [String] 
 
-> $(attLabels [("checkNames", ''Bool), ("declaredVars", ''DeclaredVars)])
-
-meter en declared vars las variables en las def si hay 2 con el mismo nombre entonces False
-despues todos los vals  dan true
-y las vars si no estan en la lista entonces False
-todo lo desmas es un and entre sus hijos
+> $(attLabels [("checkNames", ''Bool), ("declaredVars", ''DeclaredVars), ("definedVars", ''DeclaredVars) ])
 
 > declaredVars_asp 
 >   =  inh declaredVars p_Program ch_programDefs (at lhs declaredVars)  
@@ -103,6 +98,6 @@ todo lo desmas es un and entre sus hijos
 >  .+: declaredVars_asp
 
 
- checkProgramNames e = sem_Program checkNames_asp e (declaredVars =. [] *. emptyAtt) #. checkNames
+> checkProgramNames e = sem_Program checkNames_asp e (declaredVars =. [] *. emptyAtt) #. checkNames
 
- test = checkProgramNames (Bop (Var "x") Or (Uop Not (Val (VBool True))))
+> test = checkProgramNames (Program "test" EmptyDef (Body (ConsStmt (WriteLn (Val (VInt 5)) ) EmptyStmt) ) )
