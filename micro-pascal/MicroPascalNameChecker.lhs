@@ -25,13 +25,22 @@ Example: pretty printing expressions
 
 > $(attLabels [("checkNames", ''Bool), ("declaredVars", ''DeclaredVars), ("definedVars", ''DeclaredVars) ])
 
+> defVars_asp 
+>   =  syn definedVars p_Program (at ch_programDefs definedVars)
+>  .+: syn definedVars p_EmptyDef (return [])
+>  .+: syn definedVars p_ConsDef  (do varName <- ter ch_varName
+>                                     defVars  <- at ch_tailDefList definedVars
+>                                     return (varName:defVars))
+>  .+: emptyAspect
+
+
 > declaredVars_asp 
 >   =  inh declaredVars p_Program ch_programDefs (at lhs declaredVars)  
->  .+: inh declaredVars p_Program ch_programBody (at lhs declaredVars) 
+>  .+: inh declaredVars p_Program ch_programBody (at ch_programDefs definedVars) 
 
->  .+: inh declaredVars p_ConsDef ch_tailDefList (at lhs declaredVars) 
-
->  .+: inh declaredVars p_Body ch_bodyStmts (at lhs declaredVars) 
+>  .+: inh declaredVars p_ConsDef ch_tailDefList (do decVars <- at lhs declaredVars
+>                                                    varName <- ter ch_varName
+>                                                    return (varName:decVars))
 
 >  .+: inh declaredVars p_ConsStmt ch_headStmt     (at lhs declaredVars) 
 >  .+: inh declaredVars p_ConsStmt ch_tailStmtList (at lhs declaredVars) 
@@ -50,7 +59,7 @@ Example: pretty printing expressions
 >  .+: inh declaredVars p_Bop ch_leftBop (at lhs declaredVars)  
 >  .+: inh declaredVars p_Bop ch_rightBop (at lhs declaredVars)
 >  .+: inh declaredVars p_Uop ch_expr (at lhs declaredVars)
->  .+: emptyAspect
+>  .+: defVars_asp
 
 > checkNames_asp  
 >   =  syn checkNames p_Program (do ok  <- at ch_programDefs checkNames
@@ -62,8 +71,6 @@ Example: pretty printing expressions
 >                                    varName <- ter ch_varName
 >                                    ok      <- at ch_tailDefList checkNames
 >                                    return (notElem varName decVars && ok))
-
->  .+: syn checkNames p_Body (at ch_bodyStmts checkNames)
 
 >  .+: syn checkNames p_EmptyStmt (return True)
 >  .+: syn checkNames p_ConsStmt  (do ok  <- at ch_headStmt checkNames
@@ -100,4 +107,8 @@ Example: pretty printing expressions
 
 > checkProgramNames e = sem_Program checkNames_asp e (declaredVars =. [] *. emptyAtt) #. checkNames
 
-> test = checkProgramNames (Program "test" EmptyDef (Body (ConsStmt (WriteLn (Val (VInt 5)) ) EmptyStmt) ) )
+> ok1 = checkProgramNames (Program "test" EmptyDef (ConsStmt (WriteLn (Val (VInt 5)) ) EmptyStmt ) )
+> ok2 = checkProgramNames (Program "test" (ConsDef "x" TyBool EmptyDef ) (ConsStmt (WriteLn (Var "x" ) ) EmptyStmt ) )
+> ok3 = checkProgramNames (Program "test" (ConsDef "x" TyBool (ConsDef "y" TyBool EmptyDef ) ) (ConsStmt (WriteLn (Var "x" ) ) EmptyStmt ) )
+> fail1 = checkProgramNames (Program "test" EmptyDef (ConsStmt (WriteLn (Var "x" )) EmptyStmt ) )
+> fail2 = checkProgramNames (Program "test" (ConsDef "x" TyBool (ConsDef "x" TyBool EmptyDef ) ) (ConsStmt (WriteLn (Var "x" ) ) EmptyStmt ) )

@@ -25,22 +25,19 @@
 
 > $(addNont "Program")
 > $(addNont "Defs")
-> $(addNont "Body")
 > $(addNont "Stmts")
 > $(addNont "Stmt")
 
 
-> $(addProd "Program" ''Nt_Program [("programName", Ter ''Ident),
+> $(addProd "Program" ''Nt_Program [("name", Ter ''Ident),
 >                                   ("programDefs", NonTer ''Nt_Defs),
->                                   ("programBody", NonTer ''Nt_Body)])
+>                                   ("programBody", NonTer ''Nt_Stmts)])
 
 > $(addProd "EmptyDef" ''Nt_Defs [])
 > $(addProd "ConsDef" ''Nt_Defs  [("varName", Ter ''Ident),
 >                                 ("varType", Ter ''Type),
 >                                 ("tailDefList", NonTer ''Nt_Defs)])
 
-
-> $(addProd "Body" ''Nt_Body [("bodyStmts", NonTer ''Nt_Stmts)])
 
 > $(addProd "EmptyStmt" ''Nt_Stmts [] )
 > $(addProd "ConsStmt"  ''Nt_Stmts [("headStmt", NonTer ''Nt_Stmt),
@@ -49,15 +46,13 @@
 > $(addProd "Assign" ''Nt_Stmt [("assignName", Ter ''Ident),
 >                               ("assignExpr", NonTer ''Nt_Expr)])
 > $(addProd "If" ''Nt_Stmt [("ifCond", NonTer ''Nt_Expr),
->                           ("ifThen", NonTer ''Nt_Body),
->                           ("ifElse", NonTer ''Nt_Body)])
+>                           ("ifThen", NonTer ''Nt_Stmts),
+>                           ("ifElse", NonTer ''Nt_Stmts)])
 > $(addProd "While" ''Nt_Stmt [("whileCond", NonTer ''Nt_Expr),
->                              ("whileDo" , NonTer ''Nt_Body)])
+>                              ("whileDo" , NonTer ''Nt_Stmts)])
 > $(addProd "WriteLn" ''Nt_Stmt [("writeLnExpr", NonTer ''Nt_Expr)])
 > $(addProd "ReadLn" ''Nt_Stmt [("readLnName", Ter ''Ident)])
 
-> $(closeNTs [''Nt_Program, ''Nt_Body, ''Nt_Stmts,
->             ''Nt_Defs, ''Nt_Stmt])
+> $(closeNTs [''Nt_Program, ''Nt_Stmts, ''Nt_Defs, ''Nt_Stmt])
 
-> $(mkSemFuncs [''Nt_Program, ''Nt_Body, ''Nt_Stmts,
->               ''Nt_Defs, ''Nt_Stmt])
+> $(mkSemFuncs [''Nt_Program, ''Nt_Stmts, ''Nt_Defs, ''Nt_Stmt])
