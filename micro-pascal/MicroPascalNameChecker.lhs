@@ -12,7 +12,7 @@
 > {-# LANGUAGE TypeApplications #-}
 > {-# LANGUAGE EmptyDataDeriving #-}
 
-> module MicroPascalPrettyPrint where
+> module MicroPascalNameChecker where
 
 > import Language.Grammars.AspectAG
 > import Language.Grammars.AspectAG.TH
@@ -21,16 +21,26 @@
 
 Example: pretty printing expressions
 
+> data Error = Duplicated      Ident
+>            | Undefined       Ident
+>            | Expected        Type Type
+
+> instance Show Error where
+>  show (Duplicated      n)  = "Duplicated definition: " ++ n
+>  show (Undefined       n)  = "Undefined: " ++ n
+>  show (Expected    ty ty') = "Expected: " ++ show ty ++ " Actual: " ++ show ty'
+
+> type Errors = [Error]
 > type DeclaredVars = [String] 
 
-> $(attLabels [("checkNames", ''Bool), ("declaredVars", ''DeclaredVars), ("definedVars", ''DeclaredVars) ])
+> $(attLabels [("checkNames", ''Errors), ("declaredVars", ''DeclaredVars), ("definedVars", ''DeclaredVars) ])
 
 > defVars_asp 
 >   =  syn definedVars p_Program (at ch_programDefs definedVars)
 >  .+: syn definedVars p_EmptyDef (return [])
->  .+: syn definedVars p_ConsDef  (do varName <- ter ch_varName
->                                     defVars  <- at ch_tailDefList definedVars
->                                     return (varName:defVars))
+>  .+: syn definedVars p_Def (do varName <- ter ch_varName
+>                                defVars  <- at ch_tailDefList definedVars
+>                                return (varName:defVars))
 >  .+: emptyAspect
 
 
@@ -38,12 +48,12 @@ Example: pretty printing expressions
 >   =  inh declaredVars p_Program ch_programDefs (at lhs declaredVars)  
 >  .+: inh declaredVars p_Program ch_programBody (at ch_programDefs definedVars) 
 
->  .+: inh declaredVars p_ConsDef ch_tailDefList (do decVars <- at lhs declaredVars
->                                                    varName <- ter ch_varName
->                                                    return (varName:decVars))
+>  .+: inh declaredVars p_Def ch_tailDefList (do decVars <- at lhs declaredVars
+>                                                varName <- ter ch_varName
+>                                                return (varName:decVars))
 
->  .+: inh declaredVars p_ConsStmt ch_headStmt     (at lhs declaredVars) 
->  .+: inh declaredVars p_ConsStmt ch_tailStmtList (at lhs declaredVars) 
+>  .+: inh declaredVars p_Stmt ch_headStmt     (at lhs declaredVars) 
+>  .+: inh declaredVars p_Stmt ch_tailStmtList (at lhs declaredVars) 
 
 >  .+: inh declaredVars p_Assign ch_assignExpr (at lhs declaredVars)
 
@@ -62,53 +72,55 @@ Example: pretty printing expressions
 >  .+: defVars_asp
 
 > checkNames_asp  
->   =  syn checkNames p_Program (do ok  <- at ch_programDefs checkNames
->                                   ok' <- at ch_programBody checkNames
->                                   return (ok && ok'))
+>   =  syn checkNames p_Program (do errors  <- at ch_programDefs checkNames
+>                                   errors' <- at ch_programBody checkNames
+>                                   return (errors ++ errors'))
 
->  .+: syn checkNames p_EmptyDef (return True)
->  .+: syn checkNames p_ConsDef  (do decVars <- at lhs declaredVars
->                                    varName <- ter ch_varName
->                                    ok      <- at ch_tailDefList checkNames
->                                    return (notElem varName decVars && ok))
+>  .+: syn checkNames p_EmptyDef (return [])
+>  .+: syn checkNames p_Def  (do decVars <- at lhs declaredVars
+>                                varName <- ter ch_varName
+>                                errors  <- at ch_tailDefList checkNames
+>                                return ((if elem varName decVars then [Duplicated varName] else []) ++ errors))
 
->  .+: syn checkNames p_EmptyStmt (return True)
->  .+: syn checkNames p_ConsStmt  (do ok  <- at ch_headStmt checkNames
->                                     ok' <- at ch_tailStmtList checkNames
->                                     return (ok && ok'))
+>  .+: syn checkNames p_EmptyStmt (return [])
+>  .+: syn checkNames p_Stmt  (do errors  <- at ch_headStmt checkNames
+>                                 errors' <- at ch_tailStmtList checkNames
+>                                 return (errors ++ errors'))
 
 >  .+: syn checkNames p_Assign (do decVars <- at lhs declaredVars
 >                                  varName <- ter ch_assignName
->                                  ok      <- at ch_assignExpr checkNames
->                                  return (elem varName decVars && ok))
->  .+: syn checkNames p_If     (do ok   <- at ch_ifCond checkNames
->                                  ok'  <- at ch_ifThen checkNames
->                                  ok'' <- at ch_ifElse checkNames
->                                  return (ok && ok' && ok''))
->  .+: syn checkNames p_While  (do ok   <- at ch_whileCond checkNames
->                                  ok'  <- at ch_whileDo checkNames
->                                  return (ok && ok'))
+>                                  errors  <- at ch_assignExpr checkNames
+>                                  return ((if notElem varName decVars then [Undefined varName] else []) ++ errors))
+>  .+: syn checkNames p_If     (do errors   <- at ch_ifCond checkNames
+>                                  errors'  <- at ch_ifThen checkNames
+>                                  errors'' <- at ch_ifElse checkNames
+>                                  return (errors ++ errors' ++ errors''))
+>  .+: syn checkNames p_While  (do errors   <- at ch_whileCond checkNames
+>                                  errors'  <- at ch_whileDo checkNames
+>                                  return (errors ++ errors'))
 >  .+: syn checkNames p_WriteLn (at ch_writeLnExpr checkNames)
 >  .+: syn checkNames p_ReadLn  (do decVars <- at lhs declaredVars
 >                                   varName <- ter ch_readLnName
->                                   return (elem varName decVars))
+>                                   return (if notElem varName decVars then [Undefined varName] else []))
 
 >  .+: syn checkNames p_Var (do decVars <- at lhs declaredVars
 >                               varName <- ter ch_var
->                               return (elem varName decVars))
->  .+: syn checkNames p_Val (return True)                   
->  .+: syn checkNames p_Bop (do okL  <- at ch_leftBop checkNames
->                               okR <- at ch_rightBop checkNames
->                               return (okL && okR))
->  .+: syn checkNames p_Uop (do ok <- at ch_expr checkNames
->                               return ok)
+>                               return (if notElem varName decVars then [Undefined varName] else []))
+>  .+: syn checkNames p_Val (return [])                   
+>  .+: syn checkNames p_Bop (do errors  <- at ch_leftBop checkNames
+>                               errors' <- at ch_rightBop checkNames
+>                               return (errors ++ errors'))
+>  .+: syn checkNames p_Uop (at ch_expr checkNames)
 >  .+: declaredVars_asp
 
 
 > checkProgramNames e = sem_Program checkNames_asp e (declaredVars =. [] *. emptyAtt) #. checkNames
 
-> ok1 = checkProgramNames (Program "test" EmptyDef (ConsStmt (WriteLn (Val (VInt 5)) ) EmptyStmt ) )
-> ok2 = checkProgramNames (Program "test" (ConsDef "x" TyBool EmptyDef ) (ConsStmt (WriteLn (Var "x" ) ) EmptyStmt ) )
-> ok3 = checkProgramNames (Program "test" (ConsDef "x" TyBool (ConsDef "y" TyBool EmptyDef ) ) (ConsStmt (WriteLn (Var "x" ) ) EmptyStmt ) )
-> fail1 = checkProgramNames (Program "test" EmptyDef (ConsStmt (WriteLn (Var "x" )) EmptyStmt ) )
-> fail2 = checkProgramNames (Program "test" (ConsDef "x" TyBool (ConsDef "x" TyBool EmptyDef ) ) (ConsStmt (WriteLn (Var "x" ) ) EmptyStmt ) )
+Tests
+
+> ok1 = checkProgramNames (Program "test" EmptyDef (Stmt (WriteLn (Val (VInt 5)) ) EmptyStmt ) )
+> ok2 = checkProgramNames (Program "test" (Def "x" TyBool EmptyDef ) (Stmt (WriteLn (Var "x" ) ) EmptyStmt ) )
+> ok3 = checkProgramNames (Program "test" (Def "x" TyBool (Def "y" TyBool EmptyDef ) ) (Stmt (WriteLn (Var "x" ) ) EmptyStmt ) )
+> fail1 = checkProgramNames (Program "test" EmptyDef (Stmt (WriteLn (Var "x" )) EmptyStmt ) )
+> fail2 = checkProgramNames (Program "test" (Def "x" TyBool (Def "x" TyBool EmptyDef ) ) (Stmt (WriteLn (Var "x" ) ) EmptyStmt ) )
+> fail3 = checkProgramNames (Program "test" (Def "x" TyBool (Def "x" TyBool EmptyDef ) ) (Stmt (WriteLn (Var "y" ) ) EmptyStmt ) )

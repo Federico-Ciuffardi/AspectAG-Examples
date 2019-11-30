@@ -34,13 +34,13 @@
 >                                   ("programBody", NonTer ''Nt_Stmts)])
 
 > $(addProd "EmptyDef" ''Nt_Defs [])
-> $(addProd "ConsDef" ''Nt_Defs  [("varName", Ter ''Ident),
->                                 ("varType", Ter ''Type),
->                                 ("tailDefList", NonTer ''Nt_Defs)])
+> $(addProd "Def" ''Nt_Defs  [("varName", Ter ''Ident),
+>                              ("varType", Ter ''Type),
+>                              ("tailDefList", NonTer ''Nt_Defs)])
 
 
 > $(addProd "EmptyStmt" ''Nt_Stmts [] )
-> $(addProd "ConsStmt"  ''Nt_Stmts [("headStmt", NonTer ''Nt_Stmt),
+> $(addProd "Stmt"  ''Nt_Stmts [("headStmt", NonTer ''Nt_Stmt),
 >                                   ("tailStmtList", NonTer ''Nt_Stmts)])
 
 > $(addProd "Assign" ''Nt_Stmt [("assignName", Ter ''Ident),
