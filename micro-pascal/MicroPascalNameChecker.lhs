@@ -19,16 +19,12 @@
 > import ExprSyntax
 > import MicroPascalSyntax
 
-Example: pretty printing expressions
-
-> data Error = Duplicated      Ident
->            | Undefined       Ident
->            | Expected        Type Type
+> data Error = Duplicated Ident
+>            | Undefined  Ident
 
 > instance Show Error where
 >  show (Duplicated      n)  = "Duplicated definition: " ++ n
 >  show (Undefined       n)  = "Undefined: " ++ n
->  show (Expected    ty ty') = "Expected: " ++ show ty ++ " Actual: " ++ show ty'
 
 > type Errors = [Error]
 > type DeclaredVars = [String] 
@@ -119,8 +115,11 @@ Example: pretty printing expressions
 Tests
 
 > ok1 = checkProgramNames (Program "test" EmptyDef (Stmt (WriteLn (Val (VInt 5)) ) EmptyStmt ) )
-> ok2 = checkProgramNames (Program "test" (Def "x" TyBool EmptyDef ) (Stmt (WriteLn (Var "x" ) ) EmptyStmt ) )
-> ok3 = checkProgramNames (Program "test" (Def "x" TyBool (Def "y" TyBool EmptyDef ) ) (Stmt (WriteLn (Var "x" ) ) EmptyStmt ) )
+> ok2 = checkProgramNames (Program "test" (Def "x" TBool EmptyDef ) (Stmt (WriteLn (Var "x" ) ) EmptyStmt ) )
+> ok3 = checkProgramNames (Program "test" (Def "x" TBool (Def "y" TBool EmptyDef ) ) (Stmt (WriteLn (Var "x" ) ) EmptyStmt ) )
 > fail1 = checkProgramNames (Program "test" EmptyDef (Stmt (WriteLn (Var "x" )) EmptyStmt ) )
-> fail2 = checkProgramNames (Program "test" (Def "x" TyBool (Def "x" TyBool EmptyDef ) ) (Stmt (WriteLn (Var "x" ) ) EmptyStmt ) )
-> fail3 = checkProgramNames (Program "test" (Def "x" TyBool (Def "x" TyBool EmptyDef ) ) (Stmt (WriteLn (Var "y" ) ) EmptyStmt ) )
+> -- [Undefined: x]
+> fail2 = checkProgramNames (Program "test" (Def "x" TBool (Def "x" TBool EmptyDef ) ) (Stmt (WriteLn (Var "x" ) ) EmptyStmt ) )
+> -- [Duplicated definition: x]
+> fail3 = checkProgramNames (Program "test" (Def "x" TBool (Def "x" TBool EmptyDef ) ) (Stmt (WriteLn (Var "y" ) ) EmptyStmt ) )
+> -- [Duplicated definition: x,Undefined: y]

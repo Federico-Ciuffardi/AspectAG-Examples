@@ -20,6 +20,8 @@
 > import Language.Grammars.AspectAG
 > import Language.Grammars.AspectAG.TH
 
+val operations
+
 > instance Num Val where
 >    a + b = VInt (toInteger a + toInteger b)
 >    a * b = VInt (toInteger a * toInteger b)
@@ -52,11 +54,7 @@
 
 > no (VBool b) = VBool (not b)
 
-> isVBool (VBool _) = True
-> isVBool _         = False
-> isVInt  (VInt  _) = True
-> isVInt  _         = False
-
+eval definition
 
 > type VarVals = [(String, Val)]
 

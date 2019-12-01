@@ -17,6 +17,16 @@
 > import Language.Grammars.AspectAG
 > import Language.Grammars.AspectAG.TH
 
+Posible types
+
+> data Type = TBool | TInt
+>   deriving (Eq, Read)
+> instance Show Type where
+>    show (TBool)  = "boolean"
+>    show (TInt)   = "integer"
+
+> type Ident = String
+
 Val definition
 
 > data Val = VBool Bool  | VInt Integer
@@ -29,6 +39,11 @@ Val definition
 > instance Show Val where
 >    show (VBool b) = show b
 >    show (VInt i)  = show i
+
+from val to type
+
+> typeof (VInt _) = TInt 
+> typeof (VBool _) = TBool
 
 Expr definition
 
