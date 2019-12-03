@@ -29,20 +29,20 @@
 > type Errors = [Error]
 > type DeclaredVars = [String] 
 
-> $(attLabels [("checkNames", ''Errors), ("declaredVars", ''DeclaredVars), ("definedVars", ''DeclaredVars) ])
+> $(attLabels [("checkNames", ''Errors), ("declaredVars", ''DeclaredVars) ])
 
-> defVars_asp 
->   =  syn definedVars p_Program (at ch_programDefs definedVars)
->  .+: syn definedVars p_EmptyDef (return [])
->  .+: syn definedVars p_Def (do varName <- ter ch_varName
->                                defVars  <- at ch_tailDefList definedVars
->                                return (varName:defVars))
+> declaredVars_syn_asp 
+>   =  syn declaredVars p_Program (at ch_programDefs declaredVars)
+>  .+: syn declaredVars p_EmptyDef (return [])
+>  .+: syn declaredVars p_Def (do varName <- ter ch_varName
+>                                 defVars  <- at ch_tailDefList declaredVars
+>                                 return (varName:defVars))
 >  .+: emptyAspect
 
 
-> declaredVars_asp 
+> declaredVars_inh_asp 
 >   =  inh declaredVars p_Program ch_programDefs (at lhs declaredVars)  
->  .+: inh declaredVars p_Program ch_programBody (at ch_programDefs definedVars) 
+>  .+: inh declaredVars p_Program ch_programBody (at ch_programDefs declaredVars) 
 
 >  .+: inh declaredVars p_Def ch_tailDefList (do decVars <- at lhs declaredVars
 >                                                varName <- ter ch_varName
@@ -65,7 +65,7 @@
 >  .+: inh declaredVars p_Bop ch_leftBop (at lhs declaredVars)  
 >  .+: inh declaredVars p_Bop ch_rightBop (at lhs declaredVars)
 >  .+: inh declaredVars p_Uop ch_expr (at lhs declaredVars)
->  .+: defVars_asp
+>  .+: declaredVars_syn_asp
 
 > checkNames_asp  
 >   =  syn checkNames p_Program (do errors  <- at ch_programDefs checkNames
@@ -107,7 +107,7 @@
 >                               errors' <- at ch_rightBop checkNames
 >                               return (errors ++ errors'))
 >  .+: syn checkNames p_Uop (at ch_expr checkNames)
->  .+: declaredVars_asp
+>  .+: declaredVars_inh_asp
 
 
 > checkProgramNames e = sem_Program checkNames_asp e (declaredVars =. [] *. emptyAtt) #. checkNames
