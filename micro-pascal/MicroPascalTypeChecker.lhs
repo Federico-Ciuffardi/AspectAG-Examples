@@ -39,6 +39,8 @@
 >   =  inh declaredVarTypes p_Program ch_programDefs (at lhs declaredVarTypes)  
 >  .+: inh declaredVarTypes p_Program ch_programBody (at ch_programDefs declaredVarTypes) 
 
+>  .+: inh declaredVarTypes p_Def ch_tailDefList (return [])
+
 >  .+: inh declaredVarTypes p_Stmt ch_headStmt     (at lhs declaredVarTypes) 
 >  .+: inh declaredVarTypes p_Stmt ch_tailStmtList (at lhs declaredVarTypes) 
 
