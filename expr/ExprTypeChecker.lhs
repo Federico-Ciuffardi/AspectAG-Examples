@@ -11,7 +11,7 @@
 > {-# LANGUAGE MultiParamTypeClasses #-}
 > {-# LANGUAGE TypeApplications #-}
 
-> module ExprEval where
+> module ExprTypeChecker where
 
 > import ExprSyntax
 > import Data.Maybe
@@ -36,8 +36,14 @@ aux functions
 > isFail (Fail _) = True
 > isFail _        = False
 
+> isOk (Ok _) = True
+> isOk _        = False
+
 > fromOk (Ok a) = a
-> fromOk _      = error "Expected OK" 
+> fromOk _      = error "fromOk: Expected OK"
+
+> fromFail (Fail a) = a
+> fromFail _      = []
 
 > checkOut expected actual out | isFail actual      = actual
 >                              | isFail expected    = expected
@@ -75,19 +81,19 @@ defining expected types for each operator
 
 attributes definitions
 
-> $(attLabels [("exprType", ''ExceptlType), ("varTypes", ''VarTypes)])
+> $(attLabels [("exprType", ''ExceptlType), ("declaredVarTypes", ''VarTypes)])
 
-> varTypes_asp 
->   =  inh varTypes p_Bop ch_leftBop (at lhs varTypes)
->  .+: inh varTypes p_Bop ch_rightBop (at lhs varTypes)
->  .+: inh varTypes p_Uop ch_expr (at lhs varTypes)
+> declaredVarTypes_asp 
+>   =  inh declaredVarTypes p_Bop ch_leftBop (at lhs declaredVarTypes)
+>  .+: inh declaredVarTypes p_Bop ch_rightBop (at lhs declaredVarTypes)
+>  .+: inh declaredVarTypes p_Uop ch_expr (at lhs declaredVarTypes)
 >  .+: emptyAspect
 
 > exprType_asp
 >   =  syn exprType p_Val (do val <- ter ch_val
 >                             return (Ok $ typeof val))
 
->  .+: syn exprType p_Var (do varType <- at lhs varTypes
+>  .+: syn exprType p_Var (do varType <- at lhs declaredVarTypes
 >                             varName <- ter ch_var
 >                             return (Ok $ fromJust $ lookup varName varType))
 
@@ -99,9 +105,9 @@ attributes definitions
 >  .+: syn exprType p_Uop (do ty <- at ch_expr exprType
 >                             op <- ter ch_uop
 >                             return (typeCheckUop op ty))
->  .+: varTypes_asp
+>  .+: declaredVarTypes_asp
 
-> getExprType exp vT = sem_Expr exprType_asp exp (varTypes =. vT *. emptyAtt) #. exprType
+> getExprType exp vT = sem_Expr exprType_asp exp (declaredVarTypes =. vT *. emptyAtt) #. exprType
 
 tests
 

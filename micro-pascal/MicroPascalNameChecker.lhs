@@ -44,6 +44,8 @@
 >   =  inh declaredVars p_Program ch_programDefs (at lhs declaredVars)  
 >  .+: inh declaredVars p_Program ch_programBody (at ch_programDefs declaredVars) 
 
+1 - se podria mejorar para no tener esto y checkear todo haciendo uso del syn declaredVars en syn checkNames p_Def 
+
 >  .+: inh declaredVars p_Def ch_tailDefList (do decVars <- at lhs declaredVars
 >                                                varName <- ter ch_varName
 >                                                return (varName:decVars))
