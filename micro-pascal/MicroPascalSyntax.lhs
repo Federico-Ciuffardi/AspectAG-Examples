@@ -51,3 +51,9 @@
 > $(closeNTs [''Nt_Program, ''Nt_Stmts, ''Nt_Defs, ''Nt_Stmt])
 
 > $(mkSemFuncs [''Nt_Program, ''Nt_Stmts, ''Nt_Defs, ''Nt_Stmt])
+
+
+aux funcs
+
+> concatStmts (Stmt head EmptyStmt) stmts = Stmt head stmts
+> concatStmts (Stmt head tail)      stmts = concatStmts tail stmts

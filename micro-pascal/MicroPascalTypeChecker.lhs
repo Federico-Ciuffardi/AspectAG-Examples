@@ -86,12 +86,12 @@
 >  .+: syn checkTypes p_If     (do typeOrErr <- at ch_ifCond exprType
 >                                  errors'   <- at ch_ifThen checkTypes
 >                                  errors''  <- at ch_ifElse checkTypes
->                                  return ((checkType typeOrErr TBool) ++ errors' ++ errors''))--(errors ++ errors' ++ errors''))
+>                                  return ((checkType typeOrErr TBool) ++ errors' ++ errors''))
 >  .+: syn checkTypes p_While  (do typeOrErr   <- at ch_whileCond exprType
 >                                  errors'     <- at ch_whileDo checkTypes
->                                  return ((checkType typeOrErr TBool) ++ errors'))--(errors ++ errors'))
+>                                  return ((checkType typeOrErr TBool) ++ errors'))
 >  .+: syn checkTypes p_WriteLn (do typeOrErr   <- at ch_writeLnExpr exprType
->                                   return (checkType typeOrErr TInt))--(errors ++ errors'))
+>                                   return (checkType typeOrErr TInt))
 >  .+: syn checkTypes p_ReadLn  (do decVarsT <- at lhs declaredVarTypes
 >                                   varName  <- ter ch_readLnName
 >                                   return (if (fromJust $ lookup varName decVarsT) == TInt then [] 
@@ -122,11 +122,3 @@ Tests
 > -- [Expected: integer Actual: boolean]
 > fail4 = checkProgramTypes (Program "test" (Def "x" TInt (Def "y" TBool EmptyDef)) (Stmt (While (Var "x") (Stmt (ReadLn "y") EmptyStmt) )EmptyStmt) )
 > -- [Expected: boolean Actual: integer,Expected: integer Actual: boolean]
-
-
- ok1 = checkProgramTypes (Program "test" EmptyDef (Stmt (WriteLn (Val (VInt 5)) ) EmptyStmt ) )
- ok2 = checkProgramTypes (Program "test" (Def "x" TyBool EmptyDef ) (Stmt (WriteLn (Var "x" ) ) EmptyStmt ) )
- ok3 = checkProgramTypes (Program "test" (Def "x" TyBool (Def "y" TyBool EmptyDef ) ) (Stmt (WriteLn (Var "x" ) ) EmptyStmt ) )
- fail1 = checkProgramTypes (Program "test" EmptyDef (Stmt (WriteLn (Var "x" )) EmptyStmt ) )
- fail2 = checkProgramTypes (Program "test" (Def "x" TyBool (Def "x" TyBool EmptyDef ) ) (Stmt (WriteLn (Var "x" ) ) EmptyStmt ) )
- fail3 = checkProgramTypes (Program "test" (Def "x" TyBool (Def "x" TyBool EmptyDef ) ) (Stmt (WriteLn (Var "y" ) ) EmptyStmt ) )

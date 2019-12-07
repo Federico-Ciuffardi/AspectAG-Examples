@@ -11,13 +11,12 @@
 > {-# LANGUAGE MultiParamTypeClasses #-}
 > {-# LANGUAGE TypeApplications #-}
 
-> module ExprOptimize where
+> module ExprOptimizer where
 
 > import ExprSyntax
 > import ExprEval
 > import qualified Prelude
 > import Prelude hiding (or,and)
-> import Data.Maybe
 > import Language.Grammars.AspectAG
 > import Language.Grammars.AspectAG.TH
 
@@ -59,29 +58,29 @@ Uop optimization
 
 Expr optimization
 
-> $(attLabels [("optimize", ''Expr)])
+> $(attLabels [("optimizeE", ''Expr)])
 
-> optimize_asp
->   =  syn optimize p_Val (do v <- ter ch_val
->                             return (Val v))
+> optimizeE_asp
+>   =  syn optimizeE p_Val (do v <- ter ch_val
+>                              return (Val v))
 
->  .+: syn optimize p_Var (do v <- ter ch_var
->                             return (Var v))
+>  .+: syn optimizeE p_Var (do v <- ter ch_var
+>                              return (Var v))
 
   
->  .+: syn optimize p_Bop (do l  <- at ch_leftBop optimize
->                             r  <- at ch_rightBop optimize
->                             op <- ter ch_bop
->                             return (optimizeBop l op r))
+>  .+: syn optimizeE p_Bop (do l  <- at ch_leftBop optimizeE
+>                              r  <- at ch_rightBop optimizeE
+>                              op <- ter ch_bop
+>                              return (optimizeBop l op r))
 
 
->  .+: syn optimize p_Uop (do e  <- at ch_expr optimize
->                             op <- ter ch_uop
->                             return (optimizeUop op e))
+>  .+: syn optimizeE p_Uop (do e  <- at ch_expr optimizeE
+>                              op <- ter ch_uop
+>                              return (optimizeUop op e))
 
 >  .+: emptyAspect
 
-> optimizeExpr exp = sem_Expr optimize_asp exp  emptyAtt #. optimize
+> optimizeExpr exp = sem_Expr optimizeE_asp exp  emptyAtt #. optimizeE
 
 Tests
 
@@ -97,7 +96,7 @@ Tests
 > test1 = optimizeExpr (Uop Not (Bop t And (Uop Not (Bop t Or f )) )) 
 > --Val {val = True}
 > test2 = optimizeExpr (Uop Neg one) 
-> -- Val {val = -5}
+> -- Val {val = -1}
 > test3 = optimizeExpr (Uop Neg x) 
 > -- Uop {uop = Neg, expr = Var {var = "x"}}
 > test4 = optimizeExpr (Bop x And (Uop Not (Bop t And f )))
