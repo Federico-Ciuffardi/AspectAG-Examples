@@ -56,6 +56,20 @@ val operations
 
 eval definition
 
+> bopEval l op r = (case op of Or  -> (l `or` r)
+>                              And -> (l `and` r)
+>                              Equ -> VBool (l == r)
+>                              Lt  -> VBool (l < r)
+>                              Add -> (l + r)
+>                              Sub -> (l - r)
+>                              Mul -> (l * r)
+>                              Div -> (l `div` r)
+>                              Mod -> (l `mod` r))
+
+> uopEval op e = (case op of Not -> no e
+>                            Neg -> negate e)
+
+
 > type VarVals = [(String, Val)]
 
 > $(attLabels [("eval", ''Val), ("env", ''VarVals)])
@@ -68,20 +82,11 @@ eval definition
 > eval_Bop = syn eval p_Bop (do l  <- at ch_leftBop eval
 >                               r  <- at ch_rightBop eval
 >                               op <- ter ch_bop
->                               return (case op of Or  -> (l `or` r)
->                                                  And -> (l `and` r)
->                                                  Equ -> VBool (l == r)
->                                                  Lt  -> VBool (l < r)
->                                                  Add -> (l + r)
->                                                  Sub -> (l - r)
->                                                  Mul -> (l * r)
->                                                  Div -> (l `div` r)
->                                                  Mod -> (l `mod` r)))
+>                               return (bopEval l op r))
 
 > eval_Uop = syn eval p_Uop (do e  <- at ch_expr eval
 >                               op <- ter ch_uop
->                               return (case op of Not -> no e
->                                                  Neg -> negate e))
+>                               return (uopEval op e))
 
 > asp_eval = eval_Uop .+: eval_Bop .+: eval_val .+: eval_var .+: emptyAspect
 

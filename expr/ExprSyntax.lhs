@@ -45,6 +45,9 @@ from val to type
 > typeof (VInt _) = TInt 
 > typeof (VBool _) = TBool
 
+> isVInt v = typeof v == TInt
+> isVBool v = typeof v == TBool
+
 Expr definition
 
 > $(addNont "Expr")
