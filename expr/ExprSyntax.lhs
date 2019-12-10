@@ -59,14 +59,29 @@ Expr definition
 >   [  ("var", Ter ''String)])
 
 > data Bop = Or | And | Equ | Lt | Add | Sub | Mul | Div | Mod
->   deriving (Eq, Read, Show)
+>   deriving (Eq, Read)
+> instance Show Bop where
+>    show Or  = "OR"
+>    show And = "AND"
+>    show Equ = "="
+>    show Lt  = "<"
+>    show Add = "+"
+>    show Sub = "-"
+>    show Mul = "*"
+>    show Div = "div"
+>    show Mod = "mod"
+
 > $(addProd "Bop" ''Nt_Expr
 >   [  ("leftBop" ,  NonTer ''Nt_Expr),
 >      ("bop"     ,  Ter ''Bop),
 >      ("rightBop",  NonTer ''Nt_Expr)])
 
 > data Uop = Not | Neg
->   deriving (Eq, Read, Show)
+>   deriving (Eq, Read)
+> instance Show Uop where
+>    show Not = "NOT "
+>    show Neg = "-"
+
 > $(addProd "Uop" ''Nt_Expr
 >   [  ("uop"     ,  Ter ''Uop),
 >      ("expr",  NonTer ''Nt_Expr)])
