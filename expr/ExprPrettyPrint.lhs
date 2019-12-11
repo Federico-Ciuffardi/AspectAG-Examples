@@ -12,7 +12,7 @@
 > {-# LANGUAGE TypeApplications #-}
 > {-# LANGUAGE EmptyDataDeriving #-}
 
-> module MicroPascalPrettyPrint where
+> module ExprPrettyPrint where
 
 > import Language.Grammars.AspectAG
 > import Language.Grammars.AspectAG.TH
@@ -32,7 +32,7 @@
 
 > $(attLabels [("pPrint", ''String), ("precedence", ''Int)])
 
-> precedence_asp
+> precedenceE_asp
 >   =  (inh precedence p_Bop ch_leftBop $
 >      do op <- ter ch_bop
 >         return (bopPrecedence op))
@@ -42,7 +42,7 @@
 >  .+: inh precedence p_Uop ch_expr (return 5)
 >  .+: emptyAspect
 
-> pPrint_asp
+> pPrintE_asp
 >   =  syn pPrint p_Val (show <$> ter ch_val)
 >  .+: syn pPrint p_Var (ter ch_var)
 >  .+: (syn pPrint p_Bop $ 
@@ -56,10 +56,10 @@
 >      do op <- ter ch_uop
 >         e  <- at ch_expr pPrint
 >         return $ show op ++ e)
->  .+: precedence_asp
+>  .+: precedenceE_asp
 
 
-> pPrintExpr e = (sem_Expr pPrint_asp e (precedence =. 0 *. emptyAtt)) #. pPrint
+> pPrintExpr e = (sem_Expr pPrintE_asp e (precedence =. 0 *. emptyAtt)) #. pPrint
 
 > test1 = pPrintExpr (Bop (Bop (Var "x") Equ (Val $ VInt 31) ) Or (Uop Not (Val $ VBool True)))
 > test2 = pPrintExpr (Bop (Bop (Var "x") Add (Val $ VInt 31) ) Mul (Uop Neg (Bop (Bop (Val $ VInt 2) Add (Val $ VInt 2) ) Mul (Uop Neg (Val $ VInt 1)))))

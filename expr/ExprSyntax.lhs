@@ -37,7 +37,8 @@ Val definition
 >    VBool b == VBool b' = b == b'
 >    VBool b == a        = error (show(a) ++ " is not of type VBool")
 > instance Show Val where
->    show (VBool b) = show b
+>    show (VBool True) = "true"
+>    show (VBool False) = "false"
 >    show (VInt i)  = show i
 
 from val to type
@@ -61,8 +62,8 @@ Expr definition
 > data Bop = Or | And | Equ | Lt | Add | Sub | Mul | Div | Mod
 >   deriving (Eq, Read)
 > instance Show Bop where
->    show Or  = "OR"
->    show And = "AND"
+>    show Or  = "or"
+>    show And = "and"
 >    show Equ = "="
 >    show Lt  = "<"
 >    show Add = "+"
@@ -79,7 +80,7 @@ Expr definition
 > data Uop = Not | Neg
 >   deriving (Eq, Read)
 > instance Show Uop where
->    show Not = "NOT "
+>    show Not = "not "
 >    show Neg = "-"
 
 > $(addProd "Uop" ''Nt_Expr
