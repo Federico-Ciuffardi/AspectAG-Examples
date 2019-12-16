@@ -15,8 +15,6 @@
 
 > import ExprSyntax
 > import ExprEval
-> import qualified Prelude
-> import Prelude hiding (or,and)
 > import Language.Grammars.AspectAG
 > import Language.Grammars.AspectAG.TH
 

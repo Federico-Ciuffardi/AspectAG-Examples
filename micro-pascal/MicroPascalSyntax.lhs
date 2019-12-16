@@ -56,4 +56,4 @@
 aux funcs
 
 > concatStmts (Stmt head EmptyStmt) stmts = Stmt head stmts
-> concatStmts (Stmt head tail)      stmts = concatStmts tail stmts
+> concatStmts (Stmt head tail)      stmts = Stmt head (concatStmts tail stmts)

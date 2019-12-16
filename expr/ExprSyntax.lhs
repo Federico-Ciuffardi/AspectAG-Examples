@@ -41,14 +41,6 @@ Val definition
 >    show (VBool False) = "false"
 >    show (VInt i)  = show i
 
-from val to type
-
-> typeof (VInt _) = TInt 
-> typeof (VBool _) = TBool
-
-> isVInt v = typeof v == TInt
-> isVBool v = typeof v == TBool
-
 Expr definition
 
 > $(addNont "Expr")
@@ -90,3 +82,16 @@ Expr definition
 > $(closeNTs [''Nt_Expr])
 
 > $(mkSemFunc ''Nt_Expr)
+
+
+aux funcs
+
+> typeof (VInt _) = TInt 
+> typeof (VBool _) = TBool
+
+> isVInt v = typeof v == TInt
+> isVBool v = typeof v == TBool
+
+> vtoi (VInt i)      = i
+> vtoi (VBool True)  = 1
+> vtoi (VBool False) = 0
