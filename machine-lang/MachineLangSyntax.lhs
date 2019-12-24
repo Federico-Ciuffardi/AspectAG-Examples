@@ -54,3 +54,6 @@ aux funcs
 
 > instrCount EmptyInstr        = 0
 > instrCount (Instr head tail) = 1 + instrCount tail
+
+> arrToInstrs (h:tail) = Instr h (arrToInstrs tail)
+> arrToInstrs []       = EmptyInstr

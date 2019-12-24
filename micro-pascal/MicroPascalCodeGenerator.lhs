@@ -32,51 +32,55 @@
 >  .+: syn generate p_EmptyStmt (return EmptyInstr)
 
 >  .+: (syn generate p_Stmt $
->      do headIns         <- at ch_headStmt generate
+>      do headInstrs      <- at ch_headStmt generate
 >         tailStmtListIns <- at ch_tailStmtList generate
->         return $ concatInstrs tailStmtListIns headIns)
+>         return $ concatInstrs headInstrs tailStmtListIns)
 
 >  .+: (syn generate p_Assign $
 >      do varName <- ter ch_assignName
 >         exprIns <- at ch_assignExpr generate
->         return $ Instr (STORE varName)
->                $ exprIns)
+>         return $ concatInstrs exprIns
+>                $ Instr (STORE varName)
+>                $ EmptyInstr)
 
 >  .+: (syn generate p_If $
 >      do exprIns <- at ch_ifCond generate
 >         thenIns <- at ch_ifThen generate
 >         elseIns <- at ch_ifElse generate
->         return $ concatInstrs elseIns
->                $ Instr (JUMP $ instrCount elseIns + 1)
->                $ concatInstrs thenIns
+>         return $ concatInstrs exprIns
 >                $ Instr (JMPZ $ instrCount thenIns + 2)
->                $ exprIns)
+>                $ concatInstrs thenIns
+>                $ Instr (JUMP $ instrCount elseIns + 1)
+>                $ elseIns)
 
 >  .+: (syn generate p_While $
 >      do exprIns <- at ch_whileCond generate
 >         doIns   <- at ch_whileDo generate
->         return $ Instr (JUMP $ negate (instrCount doIns + instrCount exprIns + 2) )
->                $ concatInstrs doIns
+>         return $ concatInstrs exprIns
 >                $ Instr (JMPZ $ instrCount doIns + 2)
->                $ exprIns)
-
+>                $ concatInstrs doIns
+>                $ Instr (JUMP $ negate (instrCount doIns + instrCount exprIns + 1))
+>                $ EmptyInstr)
 
 >  .+: (syn generate p_WriteLn $
 >      do exprIns <- at ch_writeLnExpr generate
->         return $ Instr WRITE
->                $ exprIns)
+>         return $ concatInstrs exprIns 
+>                $ Instr WRITE 
+>                $ EmptyInstr)
 
                                 
 >  .+: (syn generate p_ReadLn $
 >      do varName  <- ter ch_readLnName
->         return $ Instr (STORE varName)
->                $ Instr READ
+>         return $ Instr READ 
+>                $ Instr (STORE varName)
 >                $ EmptyInstr)
 
 >  .+: generateE_asp
 
 
 > generateProgram e = sem_Program generateP_asp e emptyAtt #. generate
+
+tests
 
 > test1 = generateProgram $
 >         (Program "ejemplo1" 
@@ -87,7 +91,7 @@ program ejemplo1;
 var
 begin
 end.
-
+([],[])
 
 > test2 = generateProgram  $
 >         (Program "ejemplo2" 
@@ -111,7 +115,7 @@ begin
   b := true;
   b := not (x < 10)
 end.
-
+([],[("x",10),("y",50),("b",1)])
 
 > test3 = generateProgram $
 >         (Program "ejemplo3" 
@@ -143,41 +147,43 @@ begin
   end
 end.
 
-> test4 = generateProgram $
->         (Program "ejemplo7.1" 
->         (Def "b" TInt 
->         (Def "x" TInt 
->         EmptyDef))
->         (Stmt (ReadLn "b")
->         (Stmt (ReadLn "x")
->         (Stmt (If (Bop (Var "b") Equ (Var "x")) 
->           (Stmt (WriteLn (Var "x"))
->           EmptyStmt) 
->           (Stmt (While (Bop (Var "x") Lt (Val $ VInt 4))
->             (Stmt (WriteLn (Var "b"))
->             EmptyStmt)) 
->           EmptyStmt))
->         (Stmt (Assign "x" (Bop (Bop (Var "x") Add (Val $ VBool True)) Mul (Bop (Var "b") Mul (Val $ VInt 8)) ))
->         EmptyStmt)))))
+> test4 = generateProgram 
+>         $ Program "ejemplo7.1" 
+>           ( Def "b" TInt 
+>           $ Def "x" TInt 
+>           $ EmptyDef )
+>         $ Stmt (ReadLn "b")
+>         $ Stmt (ReadLn "x")
+>         $ Stmt ( If (Bop (Var "b") Equ (Var "x")) 
+>           ( Stmt (WriteLn (Var "x"))
+>           $ EmptyStmt) 
+>           ( Stmt (While (Bop (Var "x") Lt (Val $ VInt 4))
+>             ( Stmt (WriteLn (Var "x"))
+>             $ Stmt (ReadLn "x")
+>             $ EmptyStmt)) 
+>           $ EmptyStmt))
+>         $ Stmt (Assign "x" (Bop (Var "x") Mul (Bop (Var "b") Mul (Val $ VInt 8)) ))
+>         $ EmptyStmt
 
 program ejemplo7;
-var b : boolean;
+var b : integer;
     x : integer;
 begin
   readln(b);
   readln(x);
-  if b and x then
+  if b == x then
   begin
     writeln(x)
   end
   else
   begin
-    while x * 4 do
+    while x < 4 do
     begin
-      writeln(b)
+      writeln(b);
+      readln(x)
     end
   end;
-  x := (x + true) and (b or 10)
+  x := x * b * 8
 end.
 
 > test5 = generateProgram $
