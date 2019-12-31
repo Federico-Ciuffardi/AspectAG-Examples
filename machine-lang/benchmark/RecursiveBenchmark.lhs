@@ -13,26 +13,22 @@
 > {-# LANGUAGE EmptyDataDeriving #-}
 
 > module MachineLangInterpreter where
-
-> import Language.Grammars.AspectAG
-> import Language.Grammars.AspectAG.TH
 > import Data.Maybe
 > import MachineLangSyntax
+> import Criterion.Main
+
 
 atts defs
 
 > type Stack  = [Integer]
 > type VarEnv = [(String, Integer)]
-> type State = IO (Stack,VarEnv)
-> type InstrsArr = [Instr]
-
-> $(attLabels [("state",''State), ("nextInstrs",''InstrsArr), ("prevInstrs",''InstrsArr)])
+> type State  = (Stack,VarEnv)
+> type Code   = [Instr]
 
 aux funcs for state
 
-> updateState inst mState = 
->   do (stack,env) <- mState
->      i           <- processIO inst stack
+> updateState inst (stack,env) = 
+>   do i <- processIO inst stack
 >      let stack' = i++stack
 >      return (updateStack inst stack' env,updateEnv inst stack' env)
 
@@ -70,15 +66,14 @@ aux funcs for stack
 
 aux funcs for jumps
 
-> nextState (JMPZ i) mState _ prvInstrs nxtInstrs= 
->   do (sHead:sTail,env) <- mState
->      let mState' =  return (sTail,env)
->      if sHead /= 0 then getState mState' prvInstrs'' (arrToInstrs nxtInstrs'') else getState mState' prvInstrs' (arrToInstrs nxtInstrs')
->   where (prvInstrs', nxtInstrs')   = jump i prvInstrs nxtInstrs
->         (prvInstrs'', nxtInstrs'') = jump 1 prvInstrs nxtInstrs
-> nextState (JUMP i) mState _ prvInstrs nxtInstrs = getState mState prvInstrs' (arrToInstrs nxtInstrs')
->   where (prvInstrs', nxtInstrs') = jump i prvInstrs nxtInstrs
-> nextState _        _ noJumpState _ _ = noJumpState
+> nextInstr (JMPZ i) (stackHead:_,_) prvInstrs nxtInstrs = 
+>  if stackHead /= 0 then (prvInstrs'', (arrToInstrs nxtInstrs'')) else (prvInstrs', (arrToInstrs nxtInstrs'))
+>   where (prvInstrs', nxtInstrs')   = jump i prvInstrs (instrsToArr nxtInstrs)
+>         (prvInstrs'', nxtInstrs'') = jump 1 prvInstrs (instrsToArr nxtInstrs)
+> nextInstr (JUMP i) _  prvInstrs nxtInstrs = (prvInstrs', (arrToInstrs nxtInstrs'))
+>   where (prvInstrs', nxtInstrs')   = jump i prvInstrs (instrsToArr nxtInstrs)
+> nextInstr _        _  prvInstrs nxtInstrs = (prvInstrs', (arrToInstrs nxtInstrs'))
+>   where (prvInstrs', nxtInstrs')   = jump 1 prvInstrs (instrsToArr nxtInstrs)
 
 > jump 0 prvInstrs nxtInstrs         = (prvInstrs, nxtInstrs) 
 > jump i (pHead:pTail) (nHead:nTail) | i > 0 = jump (i-1) (nHead:pHead:pTail) (nTail) 
@@ -95,41 +90,17 @@ aux funcs for env
 >                                                  | otherwise   = (var',val') : updateEnv (STORE var) [val] tail
 > updateEnv _ _ env = env
 
-> prevInstrs_asp  
->   =  (inh prevInstrs p_Instr ch_tailInstrList $
->        do headInstr  <- ter ch_headInstr
->           tailInstrs <- at lhs prevInstrs
->           return $ headInstr : tailInstrs )
->  .+: emptyAspect
+ getState stt prvInstrs nxtInstrs = sem_Instrs state_asp nxtInstrs ((state =. stt ) *. (prevInstrs =. prvInstrs) *. emptyAtt) #. state
+ interpret prog = getState (return ([],[])) [] prog 
 
-> nextInstrs_asp  
->   =  syn nextInstrs p_EmptyInstr (return $ [])
->  .+: (syn nextInstrs p_Instr  $
->        do headInstr  <- ter ch_headInstr
->           tailInstrs <- at ch_tailInstrList nextInstrs
->           return $ headInstr : tailInstrs)
->  .+: prevInstrs_asp
+> interp :: [Instr] -> Instrs -> State -> IO State
+> interp prevInstrs (Instr headInstr tailInstrs) state = 
+>   do state' <- (updateState headInstr state)
+>      let (prevInstrs', nextInstrs') = nextInstr headInstr state prevInstrs (Instr headInstr tailInstrs)
+>      interp prevInstrs' nextInstrs' state'
+> interp _ EmptyInstr state = return state
 
-> state_asp  
->   =  (inh state p_Instr ch_tailInstrList $
->        do currentnInstr <- ter ch_headInstr
->           currentState <- at lhs state
->           nxtInstrs    <- at ch_tailInstrList nextInstrs
->           prvInstrs    <- at lhs prevInstrs
->           return $ updateState currentnInstr currentState)
->  .+: (syn state p_Instr $
->        do currentnInstr <- ter ch_headInstr
->           currentState  <- at lhs state
->           noJumpState   <- at ch_tailInstrList state
->           nxtInstrs     <- at ch_tailInstrList nextInstrs
->           prvInstrs     <- at lhs prevInstrs
->           return $ nextState currentnInstr currentState noJumpState prvInstrs (currentnInstr:nxtInstrs)) -- keep executing or jump
->  .+: syn state p_EmptyInstr (at lhs state) -- end reached with no jumps
->  .+: nextInstrs_asp
-
-> getState stt prvInstrs nxtInstrs = sem_Instrs state_asp nxtInstrs ((state =. stt ) *. (prevInstrs =. prvInstrs) *. emptyAtt) #. state
-> interpret prog = getState (return ([],[])) [] prog 
-
+> interpret prog = interp [] prog ([],[])
 
 interpret tests
 
@@ -405,3 +376,23 @@ interpret tests
 > -- 2
 > -- 3
 > -- ([],[])
+
+> main = defaultMain [
+>   bgroup "Interpreter"
+>     [ bench "test0" $ nfIO test0
+>     , bench "test1" $ nfIO test1_1
+>     , bench "test2" $ nfIO test2
+>     , bench "test3" $ nfIO test3_1
+>     , bench "test4" $ nfIO test4
+>     , bench "test5" $ nfIO test5
+>     , bench "test6" $ nfIO test6
+>     , bench "test7" $ nfIO test7
+>     , bench "test8" $ nfIO test8
+>     , bench "test9" $ nfIO test9_1
+>     , bench "test10" $ nfIO test10
+>     , bench "test14" $ nfIO test14
+>     , bench "test15" $ nfIO test15
+>     , bench "test16" $ nfIO test16
+>     , bench "test17" $ nfIO test17_2
+>     ]
+>   ]

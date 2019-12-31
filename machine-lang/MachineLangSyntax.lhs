@@ -57,3 +57,6 @@ aux funcs
 
 > arrToInstrs (h:tail) = Instr h (arrToInstrs tail)
 > arrToInstrs []       = EmptyInstr
+
+> instrsToArr (Instr h t)  = h : instrsToArr t 
+> instrsToArr EmptyInstr = []
