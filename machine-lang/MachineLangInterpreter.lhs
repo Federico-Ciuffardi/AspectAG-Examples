@@ -405,3 +405,20 @@ interpret tests
 > -- 2
 > -- 3
 > -- ([],[])
+> test_iterate i = interpret 
+>   $ Instr (PUSH 0) 
+>   $ Instr (PUSH 1) 
+>   $ Instr ADD
+>   $ Instr (STORE "x") 
+>   $ Instr (LOAD "x") 
+>   $ Instr (LOAD "x") 
+>   $ Instr (PUSH i)
+>   $ Instr CMP
+>   $ Instr (PUSH 0) 
+>   $ Instr CMP 
+>   $ Instr (JMPZ 3)  
+>   $ Instr (PUSH 0)
+>   $ Instr (JUMP 2) 
+>   $ Instr (PUSH 1)
+>   $ Instr (JMPZ (negate 13)) 
+>   $ EmptyInstr

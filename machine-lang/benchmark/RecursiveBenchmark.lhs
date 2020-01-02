@@ -376,6 +376,23 @@ interpret tests
 > -- 2
 > -- 3
 > -- ([],[])
+> test_iterate i = interpret 
+>   $ Instr (PUSH 0) 
+>   $ Instr (PUSH 1) 
+>   $ Instr ADD
+>   $ Instr (STORE "x") 
+>   $ Instr (LOAD "x") 
+>   $ Instr (LOAD "x") 
+>   $ Instr (PUSH i)
+>   $ Instr CMP
+>   $ Instr (PUSH 0) 
+>   $ Instr CMP 
+>   $ Instr (JMPZ 3)  
+>   $ Instr (PUSH 0)
+>   $ Instr (JUMP 2) 
+>   $ Instr (PUSH 1)
+>   $ Instr (JMPZ (negate 13)) 
+>   $ EmptyInstr
 
 > main = defaultMain [
 >   bgroup "Interpreter"
@@ -394,5 +411,16 @@ interpret tests
 >     , bench "test15" $ nfIO test15
 >     , bench "test16" $ nfIO test16
 >     , bench "test17" $ nfIO test17_2
+>     ]
+>   ]
+
+> iterations_bench = defaultMain [
+>   bgroup "Interpreter"
+>     [ bench "i = 1" $ nfIO (test_iterate 1)
+>     , bench "i = 10" $ nfIO (test_iterate 10)
+>     , bench "i = 100" $ nfIO (test_iterate 100)
+>     , bench "i = 1000" $ nfIO (test_iterate 1000)
+>     , bench "i = 10000" $ nfIO (test_iterate 10000)
+>     , bench "i = 100000" $ nfIO (test_iterate 100000)
 >     ]
 >   ]
