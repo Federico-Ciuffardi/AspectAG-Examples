@@ -64,13 +64,13 @@
 >  .+: (syn len p_Nont13_1 $
 >      do i <- at ch_ch13_1_1 len
 >         return (i+1))
->  .+: (syn len p_Nont14_1 $
+>  {-.+: (syn len p_Nont14_1 $
 >      do i <- at ch_ch14_1_1 len
 >         return (i+1))
 >  .+: (syn len p_Nont15_1 $
 >      do i <- at ch_ch15_1_1 len
 >         return (i+1))
->  {-.+: (syn len p_Nont16_1 $
+>  .+: (syn len p_Nont16_1 $
 >      do i <- at ch_ch16_1_1 len
 >         return (i+1))
 >  .+: (syn len p_Nont17_1 $

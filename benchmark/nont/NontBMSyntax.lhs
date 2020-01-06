@@ -33,9 +33,9 @@ Expr definition
 > $(addNont "Nont11")
 > $(addNont "Nont12")
 > $(addNont "Nont13")
-> $(addNont "Nont14")
+> {-$(addNont "Nont14")
 > $(addNont "Nont15")
-> {-$(addNont "Nont16")
+> $(addNont "Nont16")
 > $(addNont "Nont17")
 > $(addNont "Nont18")
 > $(addNont "Nont19")-}
@@ -82,15 +82,15 @@ Expr definition
 >   [("ch12_1_1",  NonTer ''Nt_Nont13)])
 
 > $(addProd "Nont13_1" ''Nt_Nont13
->   [("ch13_1_1",  NonTer ''Nt_Nont14)])
+>   [("ch13_1_1",  NonTer ''Nt_Nont0)])
 
-> $(addProd "Nont14_1" ''Nt_Nont14
+> {-$(addProd "Nont14_1" ''Nt_Nont14
 >   [("ch14_1_1",  NonTer ''Nt_Nont15)])
 
 > $(addProd "Nont15_1" ''Nt_Nont15
 >   [("ch15_1_1",  NonTer ''Nt_Nont0)])
 
-> {-$(addProd "Nont16_1" ''Nt_Nont16
+> $(addProd "Nont16_1" ''Nt_Nont16
 >   [("ch16_1_1",  NonTer ''Nt_Nont17)])
 
 > $(addProd "Nont17_1" ''Nt_Nont17
@@ -103,7 +103,7 @@ Expr definition
 >   [("ch19_1_1",  NonTer ''Nt_Nont1)])-}
 
 > $(closeNTs [''Nt_Nont0, ''Nt_Nont1, ''Nt_Nont2, ''Nt_Nont3, ''Nt_Nont4, ''Nt_Nont5, ''Nt_Nont6, ''Nt_Nont7, ''Nt_Nont8, ''Nt_Nont9,
->  ''Nt_Nont10, ''Nt_Nont11, ''Nt_Nont12, ''Nt_Nont13, ''Nt_Nont14, ''Nt_Nont15]){-, ''Nt_Nont16, ''Nt_Nont17, ''Nt_Nont18, ''Nt_Nont19-}
+>  ''Nt_Nont10, ''Nt_Nont11, ''Nt_Nont12, ''Nt_Nont13]){-, ''Nt_Nont14, ''Nt_Nont15, ''Nt_Nont16, ''Nt_Nont17, ''Nt_Nont18, ''Nt_Nont19-}
 
 > $(mkSemFuncs [''Nt_Nont0, ''Nt_Nont1, ''Nt_Nont2, ''Nt_Nont3, ''Nt_Nont4, ''Nt_Nont5, ''Nt_Nont6, ''Nt_Nont7, ''Nt_Nont8, ''Nt_Nont9,
->  ''Nt_Nont10, ''Nt_Nont11, ''Nt_Nont12, ''Nt_Nont13, ''Nt_Nont14, ''Nt_Nont15]){-, ''Nt_Nont16, ''Nt_Nont17, ''Nt_Nont18, ''Nt_Nont19-}
+>  ''Nt_Nont10, ''Nt_Nont11, ''Nt_Nont12, ''Nt_Nont13]){-, ''Nt_Nont14, ''Nt_Nont15, ''Nt_Nont16, ''Nt_Nont17, ''Nt_Nont18, ''Nt_Nont19-}
