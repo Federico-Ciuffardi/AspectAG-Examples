@@ -60,7 +60,7 @@ aux funcs for stack
 >                                    | h == h'    = 0:tail
 >                                    | otherwise  = (negate 1):tail
 > updateStack (PUSH i) stack  _      = i:stack
-> -- updateStack (JUMP i) stack  _      = stack
+> updateStack (JUMP i) stack  _      = stack
 > updateStack (JMPZ i) (h:tail) _    = tail
 > updateStack (LOAD  var) stack env  = (fromJust $ lookup var env):stack
 > updateStack (STORE var) (h:tail) _ = tail
@@ -78,13 +78,6 @@ aux funcs for jumps
 >      else 
 >        getState jnextInstrs (return (sTail,env))
 
- nextState (JMPZ i) mState _ prvInstrs nxtInstrs= 
-   do (sHead:sTail,env) <- mState
-      let mState' =  return (sTail,env)
-      if sHead /= 0 then getState mState' prvInstrs'' (arrToInstrs nxtInstrs'') else getState mState' prvInstrs' (arrToInstrs nxtInstrs')
-   where (prvInstrs', nxtInstrs')   = jump i prvInstrs nxtInstrs
-         (prvInstrs'', nxtInstrs'') = jump 1 prvInstrs nxtInstrs
- nextState _        _ noJumpState _ _ = noJumpState
 
 aux funcs for env
 
@@ -103,8 +96,8 @@ aux funcs for env
 >        do currentnInstr <- ter ch_cond
 >           njnextInstrs   <- at ch_njTailInstrList nextInstrs
 >           jnextInstrs   <- at ch_jTailInstrList nextInstrs
->           return $ JumpInstrAlt currentnInstr njnextInstrs jnextInstrs) 
->  .+: prevInstrs_asp
+>           return $ JumpInstrAlt currentnInstr jnextInstrs njnextInstrs) 
+>  .+: emptyAspect
 
 > state_asp  
 >   =  (inh state p_InstrAlt ch_tailInstrAltList $
