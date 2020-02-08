@@ -16,7 +16,6 @@
 
 > import Language.Grammars.AspectAG
 > import Language.Grammars.AspectAG.TH
-> import MicroPascalSyntax
 > import MachineLangSyntax
 > import MachineLangAltSyntax
 

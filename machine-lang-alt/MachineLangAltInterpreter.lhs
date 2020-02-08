@@ -27,7 +27,7 @@ atts defs
 > type VarEnv = [(String, Integer)]
 > type State = IO (Stack,VarEnv)
 
-> $(attLabels [("state",''State)])
+> $(attLabels [("state",''State), ("nextInstrs",''InstrsAlt)])
 
 aux funcs for state
 
@@ -71,9 +71,12 @@ aux funcs for stack
 
 aux funcs for jumps
 
-> nextState currentnInstr currentState noJumpState jumpState =
+> nextState currentnInstr currentState njnextInstrs jnextInstrs =
 >   do (sHead:sTail,env) <- currentState
->      if sHead /= 0 then noJumpState else jumpState
+>      if sHead /= 0 then 
+>        getState njnextInstrs (return (sTail,env))
+>      else 
+>        getState jnextInstrs (return (sTail,env))
 
  nextState (JMPZ i) mState _ prvInstrs nxtInstrs= 
    do (sHead:sTail,env) <- mState
@@ -89,6 +92,19 @@ aux funcs for env
 > updateEnv (STORE var) (val:_) ((var',val'):tail) | var == var' = (var,val):tail
 >                                                  | otherwise   = (var',val') : updateEnv (STORE var) [val] tail
 > updateEnv _ _ env = env
+
+> nextInstrs_asp  
+>   =  syn nextInstrs p_EmptyInstrAlt (return $ EmptyInstrAlt)
+>  .+: (syn nextInstrs p_InstrAlt  $
+>        do headInstr  <- ter ch_headInstrAlt
+>           tailInstrs <- at ch_tailInstrAltList nextInstrs
+>           return $ InstrAlt headInstr tailInstrs)
+>  .+: (syn nextInstrs p_JumpInstrAlt $
+>        do currentnInstr <- ter ch_cond
+>           njnextInstrs   <- at ch_njTailInstrList nextInstrs
+>           jnextInstrs   <- at ch_jTailInstrList nextInstrs
+>           return $ JumpInstrAlt currentnInstr njnextInstrs jnextInstrs) 
+>  .+: prevInstrs_asp
 
 > state_asp  
 >   =  (inh state p_InstrAlt ch_tailInstrAltList $
@@ -110,14 +126,15 @@ aux funcs for env
 >  .+: (syn state p_JumpInstrAlt $
 >        do currentnInstr <- ter ch_cond
 >           currentState  <- at lhs state
->           noJumpState   <- at ch_njTailInstrList state
->           jumpState     <- at ch_jTailInstrList state
->           return $ nextState currentnInstr currentState noJumpState jumpState ) -- keep executing or jump
+>           njnextInstrs   <- at ch_njTailInstrList nextInstrs
+>           jnextInstrs   <- at ch_jTailInstrList nextInstrs
+>           return $ nextState currentnInstr currentState njnextInstrs jnextInstrs) -- keep executing or jump
 
 >  .+: syn state p_EmptyInstrAlt (at lhs state) -- end reached with no jumps
->  .+: emptyAspect
+>  .+: nextInstrs_asp
 
-> interpret prog = sem_InstrsAlt state_asp (generateAlt prog)  (state =. (return ([],[]))  *. emptyAtt) #. state
+> getState progAlt stt = sem_InstrsAlt state_asp progAlt (state =. stt  *. emptyAtt) #. state
+> interpret prog = getState (generateAlt prog) (return ([],[]))
 
 
 interpret tests
