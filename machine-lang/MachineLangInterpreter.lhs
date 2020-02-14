@@ -19,16 +19,18 @@
 > import Data.Maybe
 > import MachineLangSyntax
 
-atts defs
+types
 
 > type Stack  = [Integer]
 > type VarEnv = [(String, Integer)]
 > type State = IO (Stack,VarEnv)
 > type InstrsArr = [Instr]
 
+attributes
+
 > $(attLabels [("state",''State), ("nextInstrs",''InstrsArr), ("prevInstrs",''InstrsArr)])
 
-aux funcs for state
+Updates the state (executes the instruction inst)
 
 > updateState inst mState = 
 >   do (stack,env) <- mState
@@ -36,7 +38,7 @@ aux funcs for state
 >      let stack' = i++stack
 >      return (updateStack inst stack' env,updateEnv inst stack' env)
 
-aux funcs for IO 
+Handles the IO corresponding to the instruction 
 
 > processIO READ _ = 
 >   do ln    <- getLine 
@@ -47,7 +49,7 @@ aux funcs for IO
 > processIO _ _ = return []
 
 
-aux funcs for stack
+Updates the stack according to the instruction
 
 > updateStack NEG (h:tail) _         = (negate h):tail
 > updateStack ADD (h:h':tail) _      = (h + h'):tail
@@ -68,7 +70,14 @@ aux funcs for stack
 > updateStack SKIP stack _           = stack
 > updateStack a b c = error ("updateStack error: " ++ show a ++ " " ++ show b ++ " " ++ show c ++ " ")
 
-aux funcs for jumps
+Updates the enviroment according to the instruction
+
+> updateEnv (STORE var) (val:_) []                 = [(var,val)]
+> updateEnv (STORE var) (val:_) ((var',val'):tail) | var == var' = (var,val):tail
+>                                                  | otherwise   = (var',val') : updateEnv (STORE var) [val] tail
+> updateEnv _ _ env = env
+
+Handles execution order
 
 > nextState (JMPZ i) mState _ prvInstrs nxtInstrs= 
 >   do (sHead:sTail,env) <- mState
@@ -80,6 +89,8 @@ aux funcs for jumps
 >   where (prvInstrs', nxtInstrs') = jump i prvInstrs nxtInstrs
 > nextState _        _ noJumpState _ _ = noJumpState
 
+Returns the next and previous instructions corresponding to a (JUMP i) instruction
+
 > jump 0 prvInstrs nxtInstrs         = (prvInstrs, nxtInstrs) 
 > jump i (pHead:pTail) (nHead:nTail) | i > 0 = jump (i-1) (nHead:pHead:pTail) (nTail) 
 >                                    | i < 0 = jump (i+1) (pTail) (pHead:nHead:nTail) 
@@ -88,12 +99,9 @@ aux funcs for jumps
 > jump i [] (nHead:nTail)            | i > 0 = jump (i-1) [nHead] nTail
 >                                    | i < 0 = ([], nHead:nTail)
 
-aux funcs for env
+ASPs
 
-> updateEnv (STORE var) (val:_) []                 = [(var,val)]
-> updateEnv (STORE var) (val:_) ((var',val'):tail) | var == var' = (var,val):tail
->                                                  | otherwise   = (var',val') : updateEnv (STORE var) [val] tail
-> updateEnv _ _ env = env
+returns an array of instructions corresponding to the previous instructions 
 
 > prevInstrs_asp  
 >   =  (inh prevInstrs p_Instr ch_tailInstrList $
@@ -101,6 +109,8 @@ aux funcs for env
 >           tailInstrs <- at lhs prevInstrs
 >           return $ headInstr : tailInstrs )
 >  .+: emptyAspect
+
+returns an array of instructions corresponding to the next instructions 
 
 > nextInstrs_asp  
 >   =  syn nextInstrs p_EmptyInstr (return $ [])
@@ -116,7 +126,7 @@ aux funcs for env
 >           currentState <- at lhs state
 >           nxtInstrs    <- at ch_tailInstrList nextInstrs
 >           prvInstrs    <- at lhs prevInstrs
->           return $ updateState currentnInstr currentState)
+>           return $ updateState currentnInstr currentState) -- execute currentInstr and return the updated state
 >  .+: (syn state p_Instr $
 >        do currentnInstr <- ter ch_headInstr
 >           currentState  <- at lhs state
